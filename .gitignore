@@ -1,0 +1,18 @@
+# Logs
+logs
+*.Logs
+
+# Runtime reports
+reports
+html-report
+
+# Output of 'npm pack'
+*.tgz
+*.zip
+
+# dotenv environment variables file
+.env
+.env.test
+
+# runtime artifacts folder(s)
+*-*-*_*-*-*.*
