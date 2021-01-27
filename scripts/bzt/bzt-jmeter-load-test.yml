@@ -1,24 +1,34 @@
 # https://gettaurus.org/docs/ConfigSyntax/
+# optional arguments:
+# -o settings.env.JMX_DIR=jmx -o settings.env.RESULTS_DIR=results
 ---
 settings:
   env:
     BZT_TOKEN: ${BZT_TOKEN}
     JMX_DIR: jmx
     RESULTS_DIR: .
+    JMX_1: jmeter-test-1
+    JMX_2: jmeter-test-2
 
 execution:
 
-- concurrency: 3
+# https://gettaurus.org/docs/JMeter/#Run-Existing-JMX-File
+# https://marketplace.visualstudio.com/items?itemName=AlexandreGattiker.jmeter-tasks
+- scenario:
+    script: ${JMX_DIR}/${JMX_1}.jmx
+  concurrency: 3
   ramp-up: 20s
+  #hold-for: 20s
+  iterations: 20
   executor: jmeter
-  scenario:
-    script: ${JMX_DIR}/jmeter-test-1.jmx
 
-- concurrency: 2
+- scenario:
+    script: ${JMX_DIR}/${JMX_2}.jmx
+  concurrency: 2
   ramp-up: 20s
+  hold-for: 20s
+  iterations: 20
   executor: jmeter
-  scenario:
-    script: ${JMX_DIR}/jmeter-test-2.jmx
 
 ## https://gettaurus.org/docs/Reporting/
 reporting:
@@ -31,15 +41,31 @@ reporting:
   dump-xml: ${RESULTS_DIR}/results.xml
   dump-csv: ${RESULTS_DIR}/results.csv
 
-## If you have API Key, just export it as environment variable and uncomment the 'token'
-## If No, it will upload results anonymously to BlazeMeter Dashboard
 modules:
+  jmeter:
+    properties:
+      jmeter.reportgenerator.apdex_satisfied_threshold: 1000
+      jmeter.reportgenerator.report_title: JMeter Taurus Demo
+      jmeter.reportgenerator.overall_granularity: 1000
+
+  ## If you have API Key, just export it as environment variable and uncomment the 'token'
+  ## If No, it will upload results anonymously to BlazeMeter Dashboard
   blazemeter:
     project: Demo
     report-name: Demo Load Test Results
 #    token: ${BZT_TOKEN}
 
+services:
+# https://gettaurus.org/docs/ShellExec/
+- module: shellexec
+  prepare:
+  - mkdir -p ${RESULTS_DIR}
+  post-process:
+  - find ~/.bzt -type f -name "jmeter" -exec ln -sf {} . ';'
+  - mkdir -p ${TAURUS_ARTIFACTS_DIR}/reports/${JMX_1}
+  - awk -F',' -v OFS=',' '$7 = $7 FS "failureMessage"' ${TAURUS_ARTIFACTS_DIR}/kpi.jtl > ${TAURUS_ARTIFACTS_DIR}/${JMX_1}.jtl
+  - ./jmeter -g ${TAURUS_ARTIFACTS_DIR}/${JMX_1}.jtl -q ${TAURUS_ARTIFACTS_DIR}/jmeter-bzt.properties -o ${TAURUS_ARTIFACTS_DIR}/reports/${JMX_1}
+  - mkdir -p ${TAURUS_ARTIFACTS_DIR}/reports/${JMX_2}
+  - awk -F',' -v OFS=',' '$7 = $7 FS "failureMessage"' ${TAURUS_ARTIFACTS_DIR}/kpi-1.jtl > ${TAURUS_ARTIFACTS_DIR}/${JMX_2}.jtl
+  - ./jmeter -g ${TAURUS_ARTIFACTS_DIR}/${JMX_2}.jtl -q ${TAURUS_ARTIFACTS_DIR}/jmeter-bzt.properties -o ${TAURUS_ARTIFACTS_DIR}/reports/${JMX_2}
 
-# jmeter -g C:\hosang\taurus\tutorial\2021-01-20_18-03-17.307878\kpi.jtl -o C:\hosang\taurus\tutorial\2021-01-20_18-03-17.307878\report
-
-# -o settings.env.JMX_DIR=jmx -o settings.env.RESULTS_DIR=results
