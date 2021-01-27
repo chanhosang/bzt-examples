@@ -32,7 +32,7 @@ pipeline {
     options {
         disableConcurrentBuilds()
         timestamps()
-        skipDefaultCheckout()
+        // skipDefaultCheckout()
     }
 
     environment {
@@ -46,15 +46,15 @@ pipeline {
 
         stage('Preparation') {
             steps {
-                // If option is enabled with skipDefaultCheckout()
-                script {
-                    def gitCredentialsId = 'hosang.chan'
-                    REPO_BRANCH = 'main'
-                    REPO_URL = 'git@github.com:<repository>/bzt-examples.git'
-                    git branch: REPO_BRANCH, credentialsId: gitCredentialsId, url: REPO_URL
-                }
+                // // If option is enabled with skipDefaultCheckout()
+                // script {
+                //     def gitCredentialsId = 'hosang.chan'
+                //     REPO_BRANCH = 'main'
+                //     REPO_URL = 'https://github.com/chanhosang/bzt-examples.git'
+                //     git branch: REPO_BRANCH, credentialsId: gitCredentialsId, url: REPO_URL
+                // }
 
-                stash name: 'bzt-source', includes: 'bzt/**,jmx/**'
+                stash name: 'bzt-source', includes: 'scripts/bzt/**,jmx/**'
             }
 		}
 
@@ -79,17 +79,31 @@ pipeline {
 
                 sh """
                 mkdir -p results
-                blazemeter/taurus scripts/bzt/bzt-jmeter-load-test.yml \
+                bzt scripts/bzt/bzt-jmeter-load-test.yml \
                 -o settings.env.RESULTS_DIR=results
                 """
-
-                stash name: 'results', includes: 'results/**'
+                // Move the reports from taurus artifacts dir location to workspace dir
+                sh """
+                mv /tmp/artifacts/reports ${WORKSPACE}/
+                """
 
             }
 
 			post {
                 always {
-                    archiveArtifacts artifacts: "results/**", fingerprint: true
+                    archiveArtifacts artifacts: "results/**, reports/**", fingerprint: true
+                    perfReport errorFailedThreshold: 50,
+                    errorUnstableThreshold: 10,
+                    filterRegex: '',
+                    sourceDataFiles: 'results/*.xml'
+
+                    publishHTML([allowMissing: false,
+                        alwaysLinkToLastBuild: false,
+                        keepAll: false,
+                        reportDir: 'reports',
+                        reportFiles: '**/index.html',
+                        reportName: 'HTML Report',
+                        reportTitles: ''])
                     cleanWs()
                 }
             }
