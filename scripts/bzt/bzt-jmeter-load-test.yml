@@ -1,0 +1,45 @@
+# https://gettaurus.org/docs/ConfigSyntax/
+---
+settings:
+  env:
+    BZT_TOKEN: ${BZT_TOKEN}
+    JMX_DIR: jmx
+    RESULTS_DIR: .
+
+execution:
+
+- concurrency: 3
+  ramp-up: 20s
+  executor: jmeter
+  scenario:
+    script: ${JMX_DIR}/jmeter-test-1.jmx
+
+- concurrency: 2
+  ramp-up: 20s
+  executor: jmeter
+  scenario:
+    script: ${JMX_DIR}/jmeter-test-2.jmx
+
+## https://gettaurus.org/docs/Reporting/
+reporting:
+- module: final-stats
+  summary: true  # overall samples count and percent of failures
+  percentiles: true  # display average times and percentiles
+  summary-labels: false # provides list of sample labels, status, percentage of completed, avg time and errors
+  failed-labels: false  # provides list of sample labels with failures
+  test-duration: true  # provides test duration
+  dump-xml: ${RESULTS_DIR}/results.xml
+  dump-csv: ${RESULTS_DIR}/results.csv
+
+## If you have API Key, just export it as environment variable and uncomment the 'token'
+## If No, it will upload results anonymously to BlazeMeter Dashboard
+modules:
+  blazemeter:
+    project: Demo
+    report-name: Demo Load Test Results
+#    token: ${BZT_TOKEN}
+
+
+# jmeter -g C:\hosang\taurus\tutorial\2021-01-20_18-03-17.307878\kpi.jtl -o C:\hosang\taurus\tutorial\2021-01-20_18-03-17.307878\report
+
+# -o settings.env.JMX_DIR=jmx -o settings.env.RESULTS_DIR=results

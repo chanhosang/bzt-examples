@@ -23,7 +23,7 @@ Also, it provides a reporting option by integrating with the‘blazemeter.com’
 
 To run a demo test:
 ```
-bzt bzt-jmeter-load-test.yml -report
+bzt scripts/bzt/bzt-jmeter-load-test.yml -report
 ```
 
 ## Useful References

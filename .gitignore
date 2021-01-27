@@ -3,6 +3,7 @@ logs
 *.Logs
 
 # Runtime reports
+results
 reports
 html-report
 
