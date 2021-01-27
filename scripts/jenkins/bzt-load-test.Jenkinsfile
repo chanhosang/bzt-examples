@@ -17,10 +17,10 @@
 properties(
   [
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '20')),
-    parameters([
-        string(name: "rampup_duration", defaultValue: "10s", description: 'Set a realistic duration for ramp-up. e.g. 30s, 1m'),
-        string(name: "steady_duration", defaultValue: "1m", description: 'Set a duration for steady state. e.g. 30s, 1m')
-    ])
+    // parameters([
+    //     string(name: "rampup_duration", defaultValue: "10s", description: 'Set a realistic duration for ramp-up. e.g. 30s, 1m'),
+    //     string(name: "steady_duration", defaultValue: "1m", description: 'Set a duration for steady state. e.g. 30s, 1m')
+    // ])
   ]
 )
 

@@ -26,6 +26,15 @@ To run a demo test:
 bzt scripts/bzt/bzt-jmeter-load-test.yml -report
 ```
 
+## What if using Maven instead of Taurus?
+
+By using maven, this is how to run the same scenarios as configurewd in **bzt-jmeter-load-test.yml**:
+```
+cd maven
+mvn clean verify -P jmeter-test-1 -f pom.xml -DnumberOfThreads=3 -DrampUp=20 -DloopCount=20
+mvn clean verify -P jmeter-test-2 -f pom.xml -DnumberOfThreads=3 -DrampUp=20 -Dduration=20
+```
+
 ## Useful References
 
 [Taurus Configuration Syntax](https://gettaurus.org/docs/ConfigSyntax/)

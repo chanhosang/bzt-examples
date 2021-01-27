@@ -17,3 +17,6 @@ html-report
 
 # runtime artifacts folder(s)
 *-*-*_*-*-*.*
+
+# maveb
+target

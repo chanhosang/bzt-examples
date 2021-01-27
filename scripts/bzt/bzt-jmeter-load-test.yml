@@ -57,6 +57,7 @@ modules:
 
 services:
 # https://gettaurus.org/docs/ShellExec/
+# ONLY works in Linux
 - module: shellexec
   prepare:
   - mkdir -p ${RESULTS_DIR}

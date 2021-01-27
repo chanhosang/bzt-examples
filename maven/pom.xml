@@ -1,0 +1,116 @@
+<project
+	xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.jmeter.test</groupId>
+	<artifactId>jmeter-performance</artifactId>
+	<version>1.0-SNAPSHOT</version>
+	<description>Demo Load Test</description>
+	<packaging>pom</packaging>
+	<name>jmeter-performance</name>
+	<url>http://maven.apache.org</url>
+	<properties>
+		<granularity>1000</granularity>
+        <protocol>https</protocol>
+		<port>443</port>
+		<test.src.directory>../jmx</test.src.directory>
+		<testsuite></testsuite>
+		<!--  JMeter Maven Plugin - JVM Setting for JMeter Process -->
+		<jMeterProcessJVMSettings.xms>128</jMeterProcessJVMSettings.xms>
+		<jMeterProcessJVMSettings.xmx>512</jMeterProcessJVMSettings.xmx>
+		<!-- Library Version -->
+		<jmeter-maven-plugin.version>2.9.0</jmeter-maven-plugin.version>
+		<maven-dependency-plugin.version>3.1.1</maven-dependency-plugin.version>
+		<jmeter-plugins-webdriver.version>3.0</jmeter-plugins-webdriver.version>
+		<!--jmeter-plugins-tst.version>2.5</jmeter-plugins-tst.version-->
+		<jmeter-plugins-casutg.version>2.9</jmeter-plugins-casutg.version>
+		<groovy-all.version>2.4.16</groovy-all.version>
+	</properties>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>com.lazerycode.jmeter</groupId>
+				<artifactId>jmeter-maven-plugin</artifactId>
+				<version>${jmeter-maven-plugin.version}</version>
+				<executions>
+					<execution>
+						<id>jmeter-tests</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>jmeter</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<testResultsTimestamp>false</testResultsTimestamp>
+					<testFilesDirectory>${test.src.directory}/${testsuite}/</testFilesDirectory>
+					<testFilesIncluded>
+						<testFilesIncluded>${project}.jmx</testFilesIncluded>
+					</testFilesIncluded>
+					<propertiesUser>
+                        <!-- Thread Group  -->
+						<threadgroup.numberOfThreads>${numberOfThreads}</threadgroup.numberOfThreads>
+						<threadgroup.rampUp>${rampUp}</threadgroup.rampUp>
+						<threadgroup.loopCount>${loopCount}</threadgroup.loopCount>
+                        <threadgroup.duration>${duration}</threadgroup.duration>
+                        <!-- overide property value in user.properties -->
+                        <jmeter.reportgenerator.overall_granularity>${granularity}</jmeter.reportgenerator.overall_granularity>
+                    </propertiesUser>
+					<jMeterProcessJVMSettings>
+						<xms>${jMeterProcessJVMSettings.xms}</xms>
+						<xmx>${jMeterProcessJVMSettings.xmx}</xmx>
+					</jMeterProcessJVMSettings>
+					<generateReports>true</generateReports>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	<dependencies>
+		<!-- Specify the version (2.4.13) of groovy-all. If not it will default to older version of 2.4.7 and results in uncaught exception:
+		     groovy-all is loaded in version 2.4.13 and you are trying to load version 2.4.7 -->
+		<dependency>
+			<groupId>org.codehaus.groovy</groupId>
+			<artifactId>groovy-all</artifactId>
+			<version>${groovy-all.version}</version>
+			<type>pom</type>
+		</dependency>
+		<!-- <dependency>
+			<groupId>org.seleniumhq.selenium</groupId>
+			<artifactId>selenium-chrome-driver</artifactId>
+			<version>3.141.59</version>
+		</dependency> -->
+	</dependencies>
+	<profiles>
+		<profile>
+			<!--
+				A protocol-based performance testing using JMeter.
+                Example,
+                mvn clean verify -P jmeter-test-1 -f pom.xml \
+                -DnumberOfThreads=3 -DrampUp=20 -DloopCount=20
+			-->
+			<id>jmeter-test-1</id>
+			<properties>
+				<project>jmeter-test-1</project>
+				<name>Demo 1</name>
+                <numberOfThreads>1</numberOfThreads>
+				<rampUp>1</rampUp>
+                <duration>1</duration>
+			</properties>
+		</profile>
+        <profile>
+			<!--
+				A protocol-based performance testing using JMeter.
+                Example,
+                mvn clean verify -P jmeter-test-2 -f pom.xml \
+                -DnumberOfThreads=2 -DrampUp=20 -Dduration=20
+			-->
+			<id>jmeter-test-2</id>
+			<properties>
+				<project>jmeter-test-2</project>
+				<name>Demo 2</name>
+                <numberOfThreads>1</numberOfThreads>
+                <duration>1</duration>
+			</properties>
+		</profile>
+	</profiles>
+</project>
