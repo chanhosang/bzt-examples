@@ -17,10 +17,15 @@
 properties(
   [
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '20')),
-    // parameters([
-    //     string(name: "rampup_duration", defaultValue: "10s", description: 'Set a realistic duration for ramp-up. e.g. 30s, 1m'),
-    //     string(name: "steady_duration", defaultValue: "1m", description: 'Set a duration for steady state. e.g. 30s, 1m')
-    // ])
+    parameters([
+        booleanParam(
+			description: "Do you want to generate report using BlazeMeter Reporting Service?",
+			name: "run_blazemeter_reporter",
+			defaultValue: true
+		),
+        // string(name: "rampup_duration", defaultValue: "10s", description: 'Set a realistic duration for ramp-up. e.g. 30s, 1m'),
+        // string(name: "steady_duration", defaultValue: "1m", description: 'Set a duration for steady state. e.g. 30s, 1m')
+    ])
   ]
 )
 
@@ -77,16 +82,24 @@ pipeline {
                 // -v /home/ubuntu/bzt/bzt-results:/tmp/artifacts \
                 // blazemeter/taurus bzt-jmeter-load-test.yml -o settings.env.RESULTS_DIR=results
 
-                sh """
-                mkdir -p results
-                bzt scripts/bzt/bzt-jmeter-load-test.yml \
-                -o settings.env.RESULTS_DIR=results
-                """
-                // Move the reports from taurus artifacts dir location to workspace dir
-                sh """
-                mv /tmp/artifacts/reports ${WORKSPACE}/
-                """
+                script {
+                    def extra_args = ""
 
+                    // If true, uploads tests stats into BlazeMeter.com service
+                    if (params.run_blazemeter_reporter) {
+                        extra_args = "-report"
+                    }
+
+                    sh """
+                    mkdir -p results
+                    bzt scripts/bzt/bzt-jmeter-load-test.yml \
+                    -o settings.env.RESULTS_DIR=results ${extra_args}
+                    """
+                    // Move the reports from taurus artifacts dir location to workspace dir
+                    sh """
+                    mv /tmp/artifacts/reports ${WORKSPACE}/
+                    """
+                }
             }
 
 			post {
