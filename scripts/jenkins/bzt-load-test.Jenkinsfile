@@ -90,10 +90,15 @@ pipeline {
                         extra_args = "-report"
                     }
 
+                    // -o modules.jmeter.properties=\"{'jmeter.reportgenerator.overall_granularity':1000}\"
                     sh """
                     mkdir -p results
                     bzt scripts/bzt/bzt-jmeter-load-test.yml \
-                    -o settings.env.RESULTS_DIR=results ${extra_args}
+                    ${extra_args} \
+                    -o settings.env.RESULTS_DIR=results \
+                    -o settings.env.THREAD_USERS=2 \
+                    -o settings.env.THREAD_ITERATION=20 \
+                    -o settings.env.THREAD_RAMPUP=20s
                     """
                     // Move the reports from taurus artifacts dir location to workspace dir
                     sh """

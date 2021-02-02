@@ -9,27 +9,32 @@ settings:
     RESULTS_DIR: .
     JMX_1: jmeter-test-1
     JMX_2: jmeter-test-2
+    THREAD_USERS: 3
+    THREAD_ITERATION: 20
+    THREAD_RAMPUP: 20s
 
 execution:
 
+# Test Scenarios
 # https://gettaurus.org/docs/JMeter/#Run-Existing-JMX-File
 # https://marketplace.visualstudio.com/items?itemName=AlexandreGattiker.jmeter-tasks
 - scenario:
     script: ${JMX_DIR}/${JMX_1}.jmx
-  concurrency: 3
-  ramp-up: 20s
+  concurrency: ${THREAD_USERS}
+  ramp-up: ${THREAD_RAMPUP}
   #hold-for: 20s
-  iterations: 20
+  iterations: ${THREAD_ITERATION}
   executor: jmeter
 
 - scenario:
     script: ${JMX_DIR}/${JMX_2}.jmx
-  concurrency: 2
-  ramp-up: 20s
-  hold-for: 20s
-  iterations: 20
+  concurrency: ${THREAD_USERS}
+  ramp-up: ${THREAD_RAMPUP}
+#   hold-for: 20s
+  iterations: ${THREAD_ITERATION}
   executor: jmeter
 
+# To generate *.csv output file to publish performance results in Jenkins
 ## https://gettaurus.org/docs/Reporting/
 reporting:
 - module: final-stats
@@ -42,6 +47,9 @@ reporting:
   dump-csv: ${RESULTS_DIR}/results.csv
 
 modules:
+  # A flag to run scenarios in parallel or sequential
+  local:
+    sequential: false  # false by default
   jmeter:
     properties:
       jmeter.reportgenerator.apdex_satisfied_threshold: 1000
@@ -55,18 +63,32 @@ modules:
     report-name: Demo Load Test Results
 #    token: ${BZT_TOKEN}
 
+#########################################
+# To generate HTML Report (Linux Only).
+#########################################
+# Taurus doesn't write 'failureMessage' column into kpi.jtl file,
+# which is required for default JMeter Results File Configuration in order to generate the reporting dashboard.
+# Therefore, manually set assertion_results_failure_message=false
 services:
-# https://gettaurus.org/docs/ShellExec/
-# ONLY works in Linux
 - module: shellexec
   prepare:
   - mkdir -p ${RESULTS_DIR}
+  - mkdir -p ${TAURUS_ARTIFACTS_DIR}/reports
   post-process:
   - find ~/.bzt -type f -name "jmeter" -exec ln -sf {} . ';'
-  - mkdir -p ${TAURUS_ARTIFACTS_DIR}/reports/${JMX_1}
-  - awk -F',' -v OFS=',' '$7 = $7 FS "failureMessage"' ${TAURUS_ARTIFACTS_DIR}/kpi.jtl > ${TAURUS_ARTIFACTS_DIR}/${JMX_1}.jtl
-  - ./jmeter -g ${TAURUS_ARTIFACTS_DIR}/${JMX_1}.jtl -q ${TAURUS_ARTIFACTS_DIR}/jmeter-bzt.properties -o ${TAURUS_ARTIFACTS_DIR}/reports/${JMX_1}
-  - mkdir -p ${TAURUS_ARTIFACTS_DIR}/reports/${JMX_2}
-  - awk -F',' -v OFS=',' '$7 = $7 FS "failureMessage"' ${TAURUS_ARTIFACTS_DIR}/kpi-1.jtl > ${TAURUS_ARTIFACTS_DIR}/${JMX_2}.jtl
-  - ./jmeter -g ${TAURUS_ARTIFACTS_DIR}/${JMX_2}.jtl -q ${TAURUS_ARTIFACTS_DIR}/jmeter-bzt.properties -o ${TAURUS_ARTIFACTS_DIR}/reports/${JMX_2}
-
+  - if test -f "${TAURUS_ARTIFACTS_DIR}/kpi.jtl"; then
+    cp ${TAURUS_ARTIFACTS_DIR}/kpi.jtl ${TAURUS_ARTIFACTS_DIR}/${JMX_1}.jtl;
+    ./jmeter
+    -Jjmeter.save.saveservice.assertion_results_failure_message=false
+    -g ${TAURUS_ARTIFACTS_DIR}/${JMX_1}.jtl
+    -q ${TAURUS_ARTIFACTS_DIR}/jmeter-bzt.properties
+    -o ${TAURUS_ARTIFACTS_DIR}/reports/${JMX_1}
+    ; fi
+  - if test -f "${TAURUS_ARTIFACTS_DIR}/kpi-1.jtl"; then
+    cp ${TAURUS_ARTIFACTS_DIR}/kpi-1.jtl ${TAURUS_ARTIFACTS_DIR}/${JMX_2}.jtl;
+    ./jmeter
+    -Jjmeter.save.saveservice.assertion_results_failure_message=false
+    -g ${TAURUS_ARTIFACTS_DIR}/${JMX_2}.jtl
+    -q ${TAURUS_ARTIFACTS_DIR}/jmeter-bzt.properties
+    -o ${TAURUS_ARTIFACTS_DIR}/reports/${JMX_2}
+    ; fi
