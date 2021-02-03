@@ -1,6 +1,7 @@
 # Logs
 logs
 *.Logs
+*.log
 
 # Runtime reports
 results
