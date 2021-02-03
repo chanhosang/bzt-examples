@@ -29,17 +29,29 @@ The scenarios and the default load profiles are clearly defined in Taurus YAML s
 
 To run load test:
 ```
-bzt scripts/bzt/bzt-jmeter-load-test.yml -report
+bzt scripts/bzt/bzt-jmeter-demo-1.yml
 ```
 
-To run load test by specifying different load via command line:
+To run load test and monitor life stats from BlazeMeter Service Dashboard:
 ```
-bzt scripts/bzt/bzt-jmeter-load-test.yml -report \
+bzt scripts/bzt/bzt-jmeter-demo-1.yml -report
+```
+
+To run load test and specify parameter values for different load via command line:
+```
+bzt scripts\bzt\bzt-jmeter-demo-3.yml -o settings.env.THREAD_USERS=2 -o settings.env.THREAD_RAMPUP=4s
+```
+
+To run load test that will generate JMeter HTML Report:
+```
+bzt scripts/bzt/bzt-jmeter-load-test.yml \
 -o settings.env.RESULTS_DIR=results \
 -o settings.env.THREAD_USERS=2 \
 -o settings.env.THREAD_ITERATION=20 \
 -o settings.env.THREAD_RAMPUP=20s
 ```
+
+
 
 ## What if using Maven instead of Taurus?
 

@@ -1,0 +1,21 @@
+# To demonstrate how to run multiple jmeter tests as different scenario in parallel
+# bzt scripts\bzt\bzt-jmeter-demo-1.yml
+---
+execution:
+
+# Run two test scenarios in parallel
+- scenario:
+    script: jmx/jmeter-test-1.jmx
+  concurrency: 1
+  ramp-up: 1s
+  iterations: 5
+  executor: jmeter
+
+- scenario:
+    script: jmx/jmeter-test-2.jmx
+  concurrency: 1
+  ramp-up: 1s
+  iterations: 10
+  executor: jmeter
+
+

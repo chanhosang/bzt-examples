@@ -1,0 +1,36 @@
+# To demonstrate how to generate *.csv and *.xml output file and execute batch command as prepare step
+# bzt scripts\bzt\bzt-jmeter-demo-2.yml
+---
+execution:
+
+# Run two test scenarios in parallel
+- scenario:
+    script: jmx/jmeter-test-1.jmx
+  concurrency: 1
+  ramp-up: 1s
+  iterations: 5
+  executor: jmeter
+
+- scenario:
+    script: jmx/jmeter-test-2.jmx
+  concurrency: 1
+  ramp-up: 1s
+  iterations: 10
+  executor: jmeter
+
+# To generate *.csv output file to publish performance results in Jenkins
+reporting:
+- module: final-stats
+  summary: true  # overall samples count and percent of failures
+  percentiles: true  # display average times and percentiles
+  summary-labels: false # provides list of sample labels, status, percentage of completed, avg time and errors
+  failed-labels: false  # provides list of sample labels with failures
+  test-duration: true  # provides test duration
+  dump-xml: results/results.xml
+  dump-csv: results/results.csv
+
+# IF running in Windows Platform, please use Batch command instead
+services:
+- module: shellexec
+  prepare:
+  - if not exist results mkdir results
