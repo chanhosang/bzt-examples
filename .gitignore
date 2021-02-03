@@ -6,6 +6,7 @@ logs
 results
 reports
 html-report
+temp
 
 # Output of 'npm pack'
 *.tgz

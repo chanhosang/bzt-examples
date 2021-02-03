@@ -51,6 +51,9 @@ modules:
   local:
     sequential: false  # false by default
   jmeter:
+    csv-jtl-flags:
+      saveAssertionResultsFailureMessage: true
+      sentBytes: true
     properties:
       jmeter.reportgenerator.apdex_satisfied_threshold: 1000
       jmeter.reportgenerator.report_title: JMeter Taurus Demo
@@ -66,9 +69,8 @@ modules:
 #########################################
 # To generate HTML Report (Linux Only).
 #########################################
-# Taurus doesn't write 'failureMessage' column into kpi.jtl file,
-# which is required for default JMeter Results File Configuration in order to generate the reporting dashboard.
-# Therefore, manually set assertion_results_failure_message=false
+# By default, the kpi.jtl file does not have enough fields for JMeter's HTML dashboard generator to operate.
+# https://gettaurus.org/docs/JMeter/#CSV-file-content-configuration
 services:
 - module: shellexec
   prepare:
@@ -79,16 +81,16 @@ services:
   - if test -f "${TAURUS_ARTIFACTS_DIR}/kpi.jtl"; then
     cp ${TAURUS_ARTIFACTS_DIR}/kpi.jtl ${TAURUS_ARTIFACTS_DIR}/${JMX_1}.jtl;
     ./jmeter
-    -Jjmeter.save.saveservice.assertion_results_failure_message=false
     -g ${TAURUS_ARTIFACTS_DIR}/${JMX_1}.jtl
     -q ${TAURUS_ARTIFACTS_DIR}/jmeter-bzt.properties
     -o ${TAURUS_ARTIFACTS_DIR}/reports/${JMX_1}
+    -j ${TAURUS_ARTIFACTS_DIR}/generate_report.log
     ; fi
   - if test -f "${TAURUS_ARTIFACTS_DIR}/kpi-1.jtl"; then
     cp ${TAURUS_ARTIFACTS_DIR}/kpi-1.jtl ${TAURUS_ARTIFACTS_DIR}/${JMX_2}.jtl;
     ./jmeter
-    -Jjmeter.save.saveservice.assertion_results_failure_message=false
     -g ${TAURUS_ARTIFACTS_DIR}/${JMX_2}.jtl
     -q ${TAURUS_ARTIFACTS_DIR}/jmeter-bzt.properties
     -o ${TAURUS_ARTIFACTS_DIR}/reports/${JMX_2}
+    -j ${TAURUS_ARTIFACTS_DIR}/generate_report.log
     ; fi
