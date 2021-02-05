@@ -6,12 +6,12 @@ settings:
   env:
     BZT_TOKEN: ${BZT_TOKEN}
     JMX_DIR: jmx
-    RESULTS_DIR: .
+    RESULTS_DIR: results
     JMX_1: jmeter-test-1
     JMX_2: jmeter-test-2
     THREAD_USERS: 3
     THREAD_ITERATION: 20
-    THREAD_RAMPUP: 20s
+    THREAD_RAMPUP: 2s
 
 execution:
 
@@ -43,8 +43,8 @@ reporting:
   summary-labels: false # provides list of sample labels, status, percentage of completed, avg time and errors
   failed-labels: false  # provides list of sample labels with failures
   test-duration: true  # provides test duration
-  dump-xml: ${RESULTS_DIR}/results.xml
-  dump-csv: ${RESULTS_DIR}/results.csv
+  dump-xml: ${TAURUS_ARTIFACTS_DIR}/results/results.xml
+  dump-csv: ${TAURUS_ARTIFACTS_DIR}/results/results.csv
 
 modules:
   # A flag to run scenarios in parallel or sequential
@@ -66,16 +66,19 @@ modules:
     report-name: Demo Load Test Results
 #    token: ${BZT_TOKEN}
 
+services:
+- module: shellexec
+  prepare:
+  - mkdir "${TAURUS_ARTIFACTS_DIR}/results"
+
 #########################################
 # To generate HTML Report (Linux Only).
 #########################################
 # By default, the kpi.jtl file does not have enough fields for JMeter's HTML dashboard generator to operate.
 # https://gettaurus.org/docs/JMeter/#CSV-file-content-configuration
-services:
 - module: shellexec
   prepare:
-  - mkdir -p ${RESULTS_DIR}
-  - mkdir -p ${TAURUS_ARTIFACTS_DIR}/reports
+  - mkdir "${TAURUS_ARTIFACTS_DIR}/reports"
   post-process:
   - find ~/.bzt -type f -name "jmeter" -exec ln -sf {} . ';'
   - if test -f "${TAURUS_ARTIFACTS_DIR}/kpi.jtl"; then

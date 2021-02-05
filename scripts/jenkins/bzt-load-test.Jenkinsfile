@@ -97,28 +97,31 @@ pipeline {
                     ${extra_args} \
                     -o settings.env.RESULTS_DIR=results \
                     -o settings.env.THREAD_USERS=2 \
-                    -o settings.env.THREAD_ITERATION=20 \
-                    -o settings.env.THREAD_RAMPUP=20s
+                    -o settings.env.THREAD_ITERATION=1 \
+                    -o settings.env.THREAD_RAMPUP=1s
                     """
                     // Move the reports from taurus artifacts dir location to workspace dir
                     sh """
-                    mv /tmp/artifacts/reports ${WORKSPACE}/
+                    mv /tmp/artifacts ${WORKSPACE}/
+                    tar -zcvf ${WORKSPACE}/html-dashboard.tar.gz ${WORKSPACE}/artifacts/reports
+                    tar -zcvf logs.tar.gz **/*.log
                     """
                 }
             }
 
 			post {
                 always {
-                    archiveArtifacts artifacts: "results/**, reports/**", fingerprint: true
+                    archiveArtifacts artifacts: "**/logs.tar.gz, **/html-dashboard.tar.gz", fingerprint: true
+
                     perfReport errorFailedThreshold: 50,
                     errorUnstableThreshold: 10,
                     filterRegex: '',
-                    sourceDataFiles: 'results/*.xml'
+                    sourceDataFiles: '**/results/results.xml'
 
                     publishHTML([allowMissing: false,
                         alwaysLinkToLastBuild: false,
                         keepAll: false,
-                        reportDir: 'reports',
+                        reportDir: 'artifacts/reports',
                         reportFiles: '**/index.html',
                         reportName: 'HTML Report',
                         reportTitles: ''])
