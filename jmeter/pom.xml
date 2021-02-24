@@ -10,11 +10,11 @@
 	<name>jmeter-performance</name>
 	<url>http://maven.apache.org</url>
 	<properties>
-		<granularity>1000</granularity>
-        <protocol>https</protocol>
+		<granularity>10000</granularity>
+		<protocol>https</protocol>
 		<port>443</port>
-		<test.src.directory>../jmx</test.src.directory>
-		<testsuite></testsuite>
+		<test.src.directory>src/test/jmeter</test.src.directory>
+		<testsuite>performance</testsuite>
 		<!--  JMeter Maven Plugin - JVM Setting for JMeter Process -->
 		<jMeterProcessJVMSettings.xms>128</jMeterProcessJVMSettings.xms>
 		<jMeterProcessJVMSettings.xmx>512</jMeterProcessJVMSettings.xmx>
@@ -22,8 +22,6 @@
 		<jmeter-maven-plugin.version>2.9.0</jmeter-maven-plugin.version>
 		<maven-dependency-plugin.version>3.1.1</maven-dependency-plugin.version>
 		<jmeter-plugins-webdriver.version>3.0</jmeter-plugins-webdriver.version>
-		<!--jmeter-plugins-tst.version>2.5</jmeter-plugins-tst.version-->
-		<jmeter-plugins-casutg.version>2.9</jmeter-plugins-casutg.version>
 		<groovy-all.version>2.4.16</groovy-all.version>
 	</properties>
 	<build>
@@ -48,20 +46,50 @@
 						<testFilesIncluded>${project}.jmx</testFilesIncluded>
 					</testFilesIncluded>
 					<propertiesUser>
-                        <!-- Thread Group  -->
+						<threadgroup.protocol>${protocol}</threadgroup.protocol>
+						<threadgroup.port>${port}</threadgroup.port>
+						<!--User Defined Variable-->
 						<threadgroup.numberOfThreads>${numberOfThreads}</threadgroup.numberOfThreads>
 						<threadgroup.rampUp>${rampUp}</threadgroup.rampUp>
 						<threadgroup.loopCount>${loopCount}</threadgroup.loopCount>
-                        <threadgroup.duration>${duration}</threadgroup.duration>
-                        <!-- overide property value in user.properties -->
-                        <jmeter.reportgenerator.overall_granularity>${granularity}</jmeter.reportgenerator.overall_granularity>
-                    </propertiesUser>
+						<threadgroup.host>${host}</threadgroup.host>
+						<!-- overide property value in user.properties -->
+						<jmeter.reportgenerator.overall_granularity>${granularity}</jmeter.reportgenerator.overall_granularity>
+					</propertiesUser>
 					<jMeterProcessJVMSettings>
 						<xms>${jMeterProcessJVMSettings.xms}</xms>
 						<xmx>${jMeterProcessJVMSettings.xmx}</xmx>
 					</jMeterProcessJVMSettings>
 					<generateReports>true</generateReports>
+					<jmeterExtensions>
+					  <artifacts>kg.apc:jmeter-plugins-webdriver:${jmeter-plugins-webdriver.version}</artifacts>
+                    </jmeterExtensions>
+					<!--
+					Not able to resovel the following:
+					[WARNING] The POM for commons-math3:commons-math3:jar:3.4.1 is missing, no dependency information available
+					[WARNING] The POM for commons-pool2:commons-pool2:jar:2.3 is missing, no dependency information available
+					-->
+					<!--<excludedArtifacts>
+						<exclusion>commons-pool2:commons-pool2</exclusion>
+						<exclusion>commons-math3:commons-math3</exclusion>
+					</excludedArtifacts>-->
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>${maven-dependency-plugin.version}</version>
+				<executions>
+					<execution>
+						<id>copy-dependencies</id>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/jmeter/lib/ext</outputDirectory>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
@@ -74,14 +102,9 @@
 			<version>${groovy-all.version}</version>
 			<type>pom</type>
 		</dependency>
-		<!-- <dependency>
-			<groupId>org.seleniumhq.selenium</groupId>
-			<artifactId>selenium-chrome-driver</artifactId>
-			<version>3.141.59</version>
-		</dependency> -->
 	</dependencies>
 	<profiles>
-		<profile>
+	    <profile>
 			<!--
 				A protocol-based performance testing using JMeter.
                 Example,

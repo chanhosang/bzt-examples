@@ -14,20 +14,7 @@
   The hostname is set as JENKINS_IPADDR system environment variable in Jenkins.
 */
 
-properties(
-  [
-    buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '20')),
-    parameters([
-        booleanParam(
-			description: "Do you want to generate report using BlazeMeter Reporting Service?",
-			name: "run_blazemeter_reporter",
-			defaultValue: true
-		),
-        // string(name: "rampup_duration", defaultValue: "10s", description: 'Set a realistic duration for ramp-up. e.g. 30s, 1m'),
-        // string(name: "steady_duration", defaultValue: "1m", description: 'Set a duration for steady state. e.g. 30s, 1m')
-    ])
-  ]
-)
+def jenkins = [:]
 
 pipeline {
     agent {
@@ -35,31 +22,34 @@ pipeline {
     }
 
     options {
-        disableConcurrentBuilds()
+        // disableConcurrentBuilds()
         timestamps()
-        // skipDefaultCheckout()
+        skipDefaultCheckout()
     }
 
     environment {
         def influxdb_host = "${JENKINS_IPADDR}" // To specify arbitrary hostname for InfluxDB
-
-        def rampup_duration  = "${params.rampup_duration}"
-        def steady_duration  = "${params.steady_duration}"
     }
 
     stages {
 
         stage('Preparation') {
             steps {
-                // // If option is enabled with skipDefaultCheckout()
-                // script {
-                //     def gitCredentialsId = 'hosang.chan'
-                //     REPO_BRANCH = 'main'
-                //     REPO_URL = 'https://github.com/chanhosang/bzt-examples.git'
-                //     git branch: REPO_BRANCH, credentialsId: gitCredentialsId, url: REPO_URL
-                // }
+                // Enabled skipDefaultCheckout()
+                script {
+                    // sh 'printenv'
+                    echo "git url: ${scm.userRemoteConfigs[0].url}"
+                    echo "git branch: ${scm.branches[0].name}"
 
-                stash name: 'bzt-source', includes: 'scripts/bzt/**,jmx/**'
+                    // checkout from version control configured in pipeline job
+                    checkout scm // git branch: 'main', credentialsId: '<credentialsId>', url: '<repositoryUrl>'
+
+                    // load groovy methods
+                    jenkins.general = load "scripts/groovy/common-methods.groovy"
+                    jenkins.general.setDynamicParameterProperties()
+                }
+
+                stash name: 'bzt-source', includes: 'scripts/bzt/**,jmeter/**'
             }
 		}
 
@@ -94,24 +84,30 @@ pipeline {
                     sh """
                     mkdir -p results
                     bzt scripts/bzt/bzt-jmeter-load-test.yml \
-                    ${extra_args} \
-                    -o settings.env.RESULTS_DIR=results \
-                    -o settings.env.THREAD_USERS=2 \
-                    -o settings.env.THREAD_ITERATION=1 \
-                    -o settings.env.THREAD_RAMPUP=1s
+                    scripts/bzt/bzt-jmeter-load-test-reporting.yml \
+                    -o settings.env.APP_HOST=${params.app_host} \
+                    -o execution.0.concurrency=${params.primary_concurrency} \
+                    -o execution.0.ramp-up=${params.primary_ramp_up} \
+                    -o execution.0.iterations=${params.primary_iterations} \
+                    -o execution.1.concurrency=${params.secondary_concurrency} \
+                    -o execution.1.ramp-up=${params.secondary_ramp_up} \
+                    -o execution.1.hold-for=${params.secondary_duration} \
+                    -o modules.jmeter.properties=\"{'jmeter.reportgenerator.overall_granularity':${params.jmeter_report_granularity}}\"  \
+                    -o modules.jmeter.properties=\"{'jmeter.reportgenerator.report_title':Demo Load Test Dashboard}\"  \
+                    ${extra_args}
                     """
                     // Move the reports from taurus artifacts dir location to workspace dir
                     sh """
-                    mv /tmp/artifacts ${WORKSPACE}/
-                    tar -zcvf ${WORKSPACE}/html-dashboard.tar.gz ${WORKSPACE}/artifacts/reports
+                    mv /tmp/artifacts .
                     tar -zcvf logs.tar.gz **/*.log
+                    tar -zcvf taurus-artifacts-${currentBuild.number}.tar.gz artifacts
                     """
                 }
             }
 
 			post {
                 always {
-                    archiveArtifacts artifacts: "**/logs.tar.gz, **/html-dashboard.tar.gz", fingerprint: true
+                    archiveArtifacts artifacts: "**/*.tar.gz", fingerprint: true
 
                     perfReport errorFailedThreshold: 50,
                     errorUnstableThreshold: 10,

@@ -1,0 +1,53 @@
+# https://gettaurus.org/docs/ConfigSyntax/
+
+---
+settings:
+  env:
+    JMX_1: jmeter-test-1
+    JMX_2: jmeter-test-2
+
+# To generate *.csv output file to publish performance results in Jenkins
+## https://gettaurus.org/docs/Reporting/
+reporting:
+- module: final-stats
+  summary: true  # overall samples count and percent of failures
+  percentiles: true  # display average times and percentiles
+  summary-labels: false # provides list of sample labels, status, percentage of completed, avg time and errors
+  failed-labels: false  # provides list of sample labels with failures
+  test-duration: true  # provides test duration
+  dump-xml: ${TAURUS_ARTIFACTS_DIR}/results/results.xml
+  dump-csv: ${TAURUS_ARTIFACTS_DIR}/results/results.csv
+
+services:
+# - module: shellexec
+#   prepare:
+#   - mkdir "${TAURUS_ARTIFACTS_DIR}/results"
+
+#########################################
+# To generate HTML Report (Linux Only).
+#########################################
+# By default, the kpi.jtl file does not have enough fields for JMeter's HTML dashboard generator to operate.
+# https://gettaurus.org/docs/JMeter/#CSV-file-content-configuration
+- module: shellexec
+  prepare:
+  - mkdir "${TAURUS_ARTIFACTS_DIR}/reports"
+  post-process:
+  - find ~/.bzt -type f -name "jmeter" -exec ln -sf {} bzt_jmeter ';'
+  - if test -f "${TAURUS_ARTIFACTS_DIR}/kpi.jtl"; then
+    cp ${TAURUS_ARTIFACTS_DIR}/kpi.jtl ${TAURUS_ARTIFACTS_DIR}/${JMX_1}.jtl;
+    sed -i 's/jmeter.save.saveservice.timestamp_format=/#jmeter.save.saveservice.timestamp_format=/g' ${TAURUS_ARTIFACTS_DIR}/jmeter-bzt.properties;
+    ./bzt_jmeter
+    -g ${TAURUS_ARTIFACTS_DIR}/${JMX_1}.jtl
+    -q ${TAURUS_ARTIFACTS_DIR}/jmeter-bzt.properties
+    -o ${TAURUS_ARTIFACTS_DIR}/reports/${JMX_1}
+    -j ${TAURUS_ARTIFACTS_DIR}/generate_report.log
+    ; fi
+  - if test -f "${TAURUS_ARTIFACTS_DIR}/kpi-1.jtl"; then
+    cp ${TAURUS_ARTIFACTS_DIR}/kpi-1.jtl ${TAURUS_ARTIFACTS_DIR}/${JMX_2}.jtl;
+    sed -i 's/jmeter.save.saveservice.timestamp_format=/#jmeter.save.saveservice.timestamp_format=/g' ${TAURUS_ARTIFACTS_DIR}/jmeter-bzt.properties;
+    ./bzt_jmeter
+    -g ${TAURUS_ARTIFACTS_DIR}/${JMX_2}.jtl
+    -q ${TAURUS_ARTIFACTS_DIR}/jmeter-bzt.properties
+    -o ${TAURUS_ARTIFACTS_DIR}/reports/${JMX_2}
+    -j ${TAURUS_ARTIFACTS_DIR}/generate_report.log
+    ; fi

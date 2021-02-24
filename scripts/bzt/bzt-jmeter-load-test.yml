@@ -1,50 +1,47 @@
 # https://gettaurus.org/docs/ConfigSyntax/
 # optional arguments:
-# -o settings.env.JMX_DIR=jmx -o settings.env.RESULTS_DIR=results
+# -o modules.jmeter.properties="{'jmeter.reportgenerator.overall_granularity':60000}"
+# -o modules.jmeter.properties="{'jmeter.reportgenerator.report_title': Load Test Dashboard}"
+
+
 ---
 settings:
   env:
-    BZT_TOKEN: ${BZT_TOKEN}
-    JMX_DIR: jmx
-    RESULTS_DIR: results
+    APP_HOST: test-api.k6.io
     JMX_1: jmeter-test-1
     JMX_2: jmeter-test-2
-    THREAD_USERS: 3
-    THREAD_ITERATION: 20
-    THREAD_RAMPUP: 2s
 
 execution:
 
 # Test Scenarios
 # https://gettaurus.org/docs/JMeter/#Run-Existing-JMX-File
 # https://marketplace.visualstudio.com/items?itemName=AlexandreGattiker.jmeter-tasks
-- scenario:
-    script: ${JMX_DIR}/${JMX_1}.jmx
-  concurrency: ${THREAD_USERS}
-  ramp-up: ${THREAD_RAMPUP}
-  #hold-for: 20s
-  iterations: ${THREAD_ITERATION}
-  executor: jmeter
+- executor: jmeter
+  scenario: SCENARIO-1
+  concurrency: 1
+  ramp-up: 1s
+  iterations: 1
+  # hold-for: 1m
 
-- scenario:
-    script: ${JMX_DIR}/${JMX_2}.jmx
-  concurrency: ${THREAD_USERS}
-  ramp-up: ${THREAD_RAMPUP}
-#   hold-for: 20s
-  iterations: ${THREAD_ITERATION}
-  executor: jmeter
+- executor: jmeter
+  scenario: SCENARIO-2
+  concurrency: 1
+  ramp-up: 1s
+#   iterations: 1
+  hold-for: 1m
 
-# To generate *.csv output file to publish performance results in Jenkins
-## https://gettaurus.org/docs/Reporting/
-reporting:
-- module: final-stats
-  summary: true  # overall samples count and percent of failures
-  percentiles: true  # display average times and percentiles
-  summary-labels: false # provides list of sample labels, status, percentage of completed, avg time and errors
-  failed-labels: false  # provides list of sample labels with failures
-  test-duration: true  # provides test duration
-  dump-xml: ${TAURUS_ARTIFACTS_DIR}/results/results.xml
-  dump-csv: ${TAURUS_ARTIFACTS_DIR}/results/results.csv
+
+scenarios:
+  SCENARIO-1:
+    variables:
+      HOST: ${APP_HOST}
+    script: jmeter/src/test/jmeter/performance/${JMX_1}.jmx
+
+  SCENARIO-2:
+    variables:
+      HOST: ${APP_HOST}
+    script: jmeter/src/test/jmeter/performance/${JMX_2}.jmx
+
 
 modules:
   # A flag to run scenarios in parallel or sequential
@@ -54,46 +51,20 @@ modules:
     csv-jtl-flags:
       saveAssertionResultsFailureMessage: true
       sentBytes: true
-    properties:
-      jmeter.reportgenerator.apdex_satisfied_threshold: 1000
-      jmeter.reportgenerator.report_title: JMeter Taurus Demo
-      jmeter.reportgenerator.overall_granularity: 1000
+    ## To override from command line
+    # properties:
+    #   jmeter.reportgenerator.apdex_satisfied_threshold: 1000
+    #   jmeter.reportgenerator.report_title: JMeter Taurus Demo
+    #   jmeter.reportgenerator.overall_granularity: 1000
 
   ## If you have API Key, just export it as environment variable and uncomment the 'token'
   ## If No, it will upload results anonymously to BlazeMeter Dashboard
   blazemeter:
     project: Demo
     report-name: Demo Load Test Results
-#    token: ${BZT_TOKEN}
+    # token: <api-key-id>:<api-key-secret>
 
 services:
 - module: shellexec
   prepare:
   - mkdir "${TAURUS_ARTIFACTS_DIR}/results"
-
-#########################################
-# To generate HTML Report (Linux Only).
-#########################################
-# By default, the kpi.jtl file does not have enough fields for JMeter's HTML dashboard generator to operate.
-# https://gettaurus.org/docs/JMeter/#CSV-file-content-configuration
-- module: shellexec
-  prepare:
-  - mkdir "${TAURUS_ARTIFACTS_DIR}/reports"
-  post-process:
-  - find ~/.bzt -type f -name "jmeter" -exec ln -sf {} . ';'
-  - if test -f "${TAURUS_ARTIFACTS_DIR}/kpi.jtl"; then
-    cp ${TAURUS_ARTIFACTS_DIR}/kpi.jtl ${TAURUS_ARTIFACTS_DIR}/${JMX_1}.jtl;
-    ./jmeter
-    -g ${TAURUS_ARTIFACTS_DIR}/${JMX_1}.jtl
-    -q ${TAURUS_ARTIFACTS_DIR}/jmeter-bzt.properties
-    -o ${TAURUS_ARTIFACTS_DIR}/reports/${JMX_1}
-    -j ${TAURUS_ARTIFACTS_DIR}/generate_report.log
-    ; fi
-  - if test -f "${TAURUS_ARTIFACTS_DIR}/kpi-1.jtl"; then
-    cp ${TAURUS_ARTIFACTS_DIR}/kpi-1.jtl ${TAURUS_ARTIFACTS_DIR}/${JMX_2}.jtl;
-    ./jmeter
-    -g ${TAURUS_ARTIFACTS_DIR}/${JMX_2}.jtl
-    -q ${TAURUS_ARTIFACTS_DIR}/jmeter-bzt.properties
-    -o ${TAURUS_ARTIFACTS_DIR}/reports/${JMX_2}
-    -j ${TAURUS_ARTIFACTS_DIR}/generate_report.log
-    ; fi

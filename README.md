@@ -27,40 +27,51 @@ Also, it provides a reporting option by integrating with the [blazemeter.com](ht
 The scenarios and the default load profiles are clearly defined in Taurus YAML script: *scripts/bzt/bzt-jmeter-load-test.yml*
 
 
-To run load test:
+To run load test with default settings:
 ```
-bzt scripts/bzt/bzt-jmeter-demo-1.yml
-```
-
-To run load test and monitor life stats from BlazeMeter Service Dashboard:
-```
-bzt scripts/bzt/bzt-jmeter-demo-1.yml -report
+bzt scripts/bzt/bzt-jmeter-load-test.yml
 ```
 
-To run load test and specify parameter values for different load via command line:
+To run load test with default settings, and monitor life stats from BlazeMeter Service Dashboard:
 ```
-bzt scripts\bzt\bzt-jmeter-demo-3.yml -o settings.env.THREAD_USERS=2 -o settings.env.THREAD_RAMPUP=4s
+bzt scripts/bzt/bzt-jmeter-load-test.yml -report
 ```
 
-To run load test that will generate JMeter HTML Report:
+To run load test by overriding the user defined variables and thread group properties via command line:
 ```
 bzt scripts/bzt/bzt-jmeter-load-test.yml \
--o settings.env.RESULTS_DIR=results \
--o settings.env.THREAD_USERS=2 \
--o settings.env.THREAD_ITERATION=20 \
--o settings.env.THREAD_RAMPUP=20s
+-o settings.env.APP_HOST=test-api.k6.io \
+-o execution.0.concurrency=1 \
+-o execution.0.ramp-up=1s \
+-o execution.0.iterations=10 \
+-o execution.1.concurrency=1 \
+-o execution.1.ramp-up=1s \
+-o execution.1.hold-for=1m \
+-report
+```
+
+To run load test and generate JMeter HTML Report upon test completion:
+```
+bzt scripts/bzt/bzt-jmeter-load-test.yml scripts/bzt/bzt-jmeter-load-test-reporting.yml\
+-o modules.jmeter.properties="{'jmeter.reportgenerator.overall_granularity':60000}"
+-o modules.jmeter.properties="{'jmeter.reportgenerator.report_title': Load Test Dashboard}"
 ```
 
 
 
 ## What if using Maven instead of Taurus?
 
-By using maven, this is how to run the same scenarios as configurewd in **bzt-jmeter-load-test.yml**:
+By using maven, this is how to run the same scenarios as configured in **bzt-jmeter-load-test.yml**:
 ```
-cd maven
-mvn clean verify -P jmeter-test-1 -f pom.xml -DnumberOfThreads=3 -DrampUp=20 -DloopCount=20
-mvn clean verify -P jmeter-test-2 -f pom.xml -DnumberOfThreads=3 -DrampUp=20 -Dduration=20
+mvn clean verify -P jmeter-test-1 -f jmeter/pom.xml -DnumberOfThreads=2 -DrampUp=10 -DloopCount=10
+
+mvn clean verify -P jmeter-test-2 -f jmeter/pom.xml -DnumberOfThreads=2 -DrampUp=20 -Dduration=60
 ```
+As you can see, you'll need to repeat the command for two times.
+
+Also, the jmeter scripts need to explicitly set the user defined variables from maven properties.
+
+For more info, refer to [Functions and Variables](https://jmeter.apache.org/usermanual/functions.html)
 
 ## Useful References
 

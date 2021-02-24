@@ -1,11 +1,13 @@
 ---
-
 execution:
-- executor: jmeter
-  scenario:
-    script: jmx/jmeter-test-1.jmx
+- concurrency: 1
+  hold-for: 5s
+  ramp-up: 2s
+  scenario: sample
 
-
-- executor: jmeter
-  scenario:
-    script: jmx/jmeter-test-2.jmx
+scenarios:
+  sample:
+    headers:
+        Connection: close
+    requests:
+    - http://localhost/

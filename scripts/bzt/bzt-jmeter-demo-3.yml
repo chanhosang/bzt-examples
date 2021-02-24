@@ -1,27 +1,49 @@
 # To demonstrate parameterization and pass in parameter values via command line.
-# bzt scripts\bzt\bzt-jmeter-demo-3.yml -o settings.env.THREAD_USERS=2 -o settings.env.THREAD_RAMPUP=4s
+# bzt scripts\bzt\bzt-jmeter-demo-3.yml \
+# -o settings.env.APP_HOST=test-api.k6.io \
+# -o execution.0.concurrency=1 \
+# -o execution.0.ramp-up=1s \
+# -o execution.0.iterations=10 \
+# -o execution.1.concurrency=1 \
+# -o execution.1.ramp-up=1s \
+# -o execution.1.iterations=10
 ---
 settings:
   env:
-    THREAD_USERS: 1
-    THREAD_RAMPUP: 1s
+    APP_HOST: test-api.k6.io
+    JMX_1: jmeter-test-1
+    JMX_2: jmeter-test-2
 
 execution:
 
-# Run two test scenarios in parallel
-- scenario:
-    script: jmx/jmeter-test-1.jmx
-  concurrency: ${THREAD_USERS}
-  ramp-up: ${THREAD_RAMPUP}
-  iterations: 5
-  executor: jmeter
+# Test Scenarios
+# https://gettaurus.org/docs/JMeter/#Run-Existing-JMX-File
+# https://marketplace.visualstudio.com/items?itemName=AlexandreGattiker.jmeter-tasks
+- executor: jmeter
+  scenario: SCENARIO-1
+  concurrency: 1
+  ramp-up: 1s
+  iterations: 1
+  # hold-for: 1m
 
-- scenario:
-    script: jmx/jmeter-test-2.jmx
-  concurrency: ${THREAD_USERS}
-  ramp-up: ${THREAD_RAMPUP}
-  iterations: 10
-  executor: jmeter
+- executor: jmeter
+  scenario: SCENARIO-2
+  concurrency: 1
+  ramp-up: 1s
+  iterations: 1
+  # hold-for: 1m
+
+
+scenarios:
+  SCENARIO-1:
+    variables:
+      HOST: ${APP_HOST}
+    script: jmeter/src/test/jmeter/performance/${JMX_1}.jmx
+
+  SCENARIO-2:
+    variables:
+      HOST: ${APP_HOST}
+    script: jmeter/src/test/jmeter/performance/${JMX_2}.jmx
 
 # To generate *.csv output file to publish performance results in Jenkins
 reporting:
