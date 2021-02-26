@@ -10,8 +10,6 @@
 	* https://wiki.jenkins.io/display/JENKINS/Git+Plugin
     * https://wiki.jenkins.io/display/JENKINS/Docker+Plugin
 	* http://wiki.jenkins-ci.org/display/JENKINS/HTML+Publisher+Plugin
-- Setup InfluxDB+Grafana for data visualisation purpose.
-  The hostname is set as JENKINS_IPADDR system environment variable in Jenkins.
 */
 
 def jenkins = [:]
@@ -25,10 +23,6 @@ pipeline {
         // disableConcurrentBuilds()
         timestamps()
         skipDefaultCheckout()
-    }
-
-    environment {
-        def influxdb_host = "${JENKINS_IPADDR}" // To specify arbitrary hostname for InfluxDB
     }
 
     stages {
