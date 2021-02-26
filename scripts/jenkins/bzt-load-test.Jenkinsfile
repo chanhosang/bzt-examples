@@ -1,8 +1,8 @@
 /*
  ============================================================================
  This Jenkins declarative pipeline (using docker pipeline plugin) demonstrate how to run
- load test with k6 (a JavaScript-based load testing tool) inside a container build agent.
- The image is based on the official k6 image from Docker Hub.
+ load test with Taurus Tool inside a container build agent.
+ The image is based on the official blzemeter/taurus image from Docker Hub.
  ============================================================================
 
  Pre-requisite:
